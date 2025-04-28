@@ -2767,13 +2767,9 @@ ppmod.onauto(function () {
         local trigger;
         local size;
         if (type == "prop_under_floor_button") {
-          size = ent.GetForwardVector() * 30 + ent.GetLeftVector() * 30 + ent.getUpVector() * 8.5
-          size = Vector(fabs(size.x), fabs(size.y), fabs(size.z))
-          trigger = ppmod.trigger(pos + ent.GetUpVector() * 8.5, size, "trigger_multiple", ang);
+          trigger = ppmod.trigger(pos + ent.GetUpVector() * 8.5, Vector(30, 30, 8.5), "trigger_multiple", ang);
         } else {
-          size = ent.GetForwardVector() * 20 + ent.GetLeftVector() * 20 + ent.getUpVector() * 7
-          size = Vector(fabs(size.x), fabs(size.y), fabs(size.z))
-          trigger = ppmod.trigger(pos + ent.GetUpVector() * 7, size, "trigger_multiple", ang);
+          trigger = ppmod.trigger(pos + ent.GetUpVector() * 7, Vector(20, 20, 7), "trigger_multiple", ang);
         }
 
         // Activated by players and physics props
