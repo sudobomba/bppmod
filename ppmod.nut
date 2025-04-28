@@ -1520,9 +1520,9 @@ for (local i = 0; i < entclasses.len(); i ++) {
      */
     local curr = null;
     while (curr = Entities.FindByClassname(curr, "player_pickup")) {
-      if (curr.GetMoveParent() == this.ent) return true;
+      if (curr.GetMoveParent() == this.ent) return curr;
     }
-    return false;
+    return null;
 
   };
 
@@ -1556,7 +1556,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
   // Returns true if the player is in the process of ducking/unducking, false otherwise
   function ducking () return this.ent.EyePosition().z - this.ent.GetOrigin().z < 63.999;
   // Returns true if the player is on the ground, false otherwise
-  function grounded () return this.ent.groundstate;
+  function grounded () return this.groundstate;
 
   // Attaches a function to the event of the player giving a certain action input
   function oninput (str, scr) {
@@ -2766,9 +2766,9 @@ ppmod.onauto(function () {
         // Adjust trigger size based on button type
         local trigger;
         if (type == "prop_under_floor_button") {
-          trigger = ppmod.trigger(pos + Vector(0, 0, 8.5), Vector(30, 30, 8.5), "trigger_multiple", ang);
+          trigger = ppmod.trigger(pos + ent.GetUpVector() * 8.5, Vector(30, 30, 8.5), "trigger_multiple", ang);
         } else {
-          trigger = ppmod.trigger(pos + Vector(0, 0, 7), Vector(20, 20, 7), "trigger_multiple", ang);
+          trigger = ppmod.trigger(pos + ent.GetUpVector() * 7, Vector(20, 20, 7), "trigger_multiple", ang);
         }
 
         // Activated by players and physics props
