@@ -1510,7 +1510,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
     }).bindenv(this));
   }
 
-  // Checks if the player is holding a physics prop
+  // Checks if the player is holding a physics prop, returning the player_pickup entity if so
   function holding () {
 
     /**
@@ -2765,10 +2765,13 @@ ppmod.onauto(function () {
 
         // Adjust trigger size based on button type
         local trigger;
+        local size;
         if (type == "prop_under_floor_button") {
-          trigger = ppmod.trigger(pos + ent.GetUpVector() * 8.5, Vector(30, 30, 8.5), "trigger_multiple", ang);
+          size = ent.GetForwardVector() * 30 + ent.GetLeftVector() * -30 + ent.getUpVector() * 7
+          trigger = ppmod.trigger(pos + ent.GetUpVector() * 8.5, size, "trigger_multiple", ang);
         } else {
-          trigger = ppmod.trigger(pos + ent.GetUpVector() * 7, Vector(20, 20, 7), "trigger_multiple", ang);
+          size = ent.GetForwardVector() * 20 + ent.GetLeftVector() * -20 + ent.getUpVector() * 7
+          trigger = ppmod.trigger(pos + ent.GetUpVector() * 7, size, "trigger_multiple", ang);
         }
 
         // Activated by players and physics props
