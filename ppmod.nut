@@ -1,22 +1,25 @@
 /**
- * ppmod version 4
- * author: PortalRunner
+ * bppmod version 4
+ * author: ORIGINAL :PortalRunner | FORKBY sudobomba
  */
 
 if (!("Entities" in this)) {
-  throw "ppmod: Tried to run in a scope without CEntities!";
+  throw "bppmod: Tried to run in a scope without CEntities!";
 }
 
-if ("ppmod" in this) {
-  printl("[ppmod] Warning: ppmod is already loaded!");
+if ("bppmod" in this) {
+  printl("[bppmod] Warning: bppmod is already loaded!");
   return;
 }
 
-::ppmod <- {};
+::bppmod <- {};
+::bp2mod <- {};
 
 /********************/
 // Global Utilities //
 /********************/
+
+//You're mean eh?
 
 // Returns the smallest of two values
 ::min <- function (a, b) return a > b ? b : a;
@@ -393,21 +396,21 @@ local ppromise_methods = {
  */
 
 // Holds generators used for async functions
-::ppmod.asyncgen <- [];
+::bppmod.asyncgen <- [];
 // Holds the value of the last ppromise yielded from an async function
 ::yielded <- null;
 
 // Runs an async generator over and over until end of scope is reached
-::ppmod.asyncrun <- function (id, resolve, reject):(ppromise_methods) {
+::bppmod.asyncrun <- function (id, resolve, reject):(ppromise_methods) {
 
   // Holds the yielded/returned value of the generator
   local next;
-  try { next = resume ppmod.asyncgen[id] }
+  try { next = resume bppmod.asyncgen[id] }
   catch (e) { return reject(e) }
 
   // If the generator has finished running, resolve the async function
-  if (ppmod.asyncgen[id].getstatus() == "dead") {
-    ppmod.asyncgen[id] = null;
+  if (bppmod.asyncgen[id].getstatus() == "dead") {
+    bppmod.asyncgen[id] = null;
     return resolve(next);
   }
 
@@ -418,7 +421,7 @@ local ppromise_methods = {
   // Resume the generator when the promise resolves
   next.then(function (val):(id, resolve, reject) {
     ::yielded <- val;
-    ppmod.asyncrun(id, resolve, reject);
+    bppmod.asyncrun(id, resolve, reject);
   });
 
 }
@@ -434,17 +437,17 @@ local ppromise_methods = {
 
     // Create a ppromise which runs the input function as a generator
     return ppromise(function (resolve, reject):(func, args) {
-      // Find a free spot in ppmod.asyncgen to insert this function
-      for (local i = 0; i < ppmod.asyncgen.len(); i ++) {
-        if (ppmod.asyncgen[i] == null) {
-          ppmod.asyncgen[i] = func.acall(args);
-          ppmod.asyncrun(i, resolve, reject);
+      // Find a free spot in bppmod.asyncgen to insert this function
+      for (local i = 0; i < bppmod.asyncgen.len(); i ++) {
+        if (bppmod.asyncgen[i] == null) {
+          bppmod.asyncgen[i] = func.acall(args);
+          bppmod.asyncrun(i, resolve, reject);
           return;
         }
       }
       // If no free space was found, extend the array by pushing to it
-      ppmod.asyncgen.push(func.acall(args));
-      ppmod.asyncrun(ppmod.asyncgen.len() - 1, resolve, reject);
+      bppmod.asyncgen.push(func.acall(args));
+      bppmod.asyncrun(bppmod.asyncgen.len() - 1, resolve, reject);
     });
 
   };
@@ -558,7 +561,7 @@ try {
     };
   }
 } catch (e) {
-  printl("[ppmod] Warning: failed to modify Vector class: " + e);
+  printl("[bppmod] Warning: failed to modify Vector class: " + e);
 }
 
 /*********************/
@@ -566,7 +569,7 @@ try {
 /*********************/
 
 // Finds an entity which matches the given parameters
-::ppmod.get <- function (arg1, arg2 = null, arg3 = null, arg4 = null) {
+::bppmod.get <- function (arg1, arg2 = null, arg3 = null, arg4 = null) {
 
   // Entity iterator
   local curr = null;
@@ -627,7 +630,7 @@ try {
 
     case "instance": {
       // If provided an entity, validate it and echo it back
-      if (ppmod.validate(arg1)) return arg1;
+      if (bppmod.validate(arg1)) return arg1;
       else return null;
     }
 
@@ -639,7 +642,7 @@ try {
 }
 
 // Returns true if the input is a valid entity handle, false otherwise
-::ppmod.validate <- function (ent) {
+::bppmod.validate <- function (ent) {
   // Entity handles must be of type "instance"
   if (typeof ent != "instance") return false;
   // Entity handles must be instances of CBaseEntity
@@ -648,7 +651,7 @@ try {
 }
 
 // Iterates through all entities that match the given criteria
-::ppmod.forent <- function (args, callback) {
+::bppmod.forent <- function (args, callback) {
 
   // Convert the input to an array if it isn't already
   if (typeof args != "array") args = [args];
@@ -657,27 +660,27 @@ try {
 
   // If the last argument is not a valid starting entity, push null
   local last = args.len() - 1;
-  if (!ppmod.validate(args[last]) && args[last] != null) {
+  if (!bppmod.validate(args[last]) && args[last] != null) {
     args.push(null);
     last ++;
   }
 
   // Iterate through entities, running the callback on each valid one
-  while (args[last] = ppmod.get.acall(args)) {
+  while (args[last] = bppmod.get.acall(args)) {
     if (!args[last].IsValid()) continue;
     callback(args[last]);
   }
 
 }
 
-// Iterates over entities backwards using ppmod.get
-::ppmod.prev <- function (...) {
+// Iterates over entities backwards using bppmod.get
+::bppmod.prev <- function (...) {
 
   // Set up entity iterators
   local start = null, curr = null, prev = null;
 
   // If the last argument is a valid starting entity, assign it
-  if (ppmod.validate(vargv[vargc - 1])) {
+  if (bppmod.validate(vargv[vargc - 1])) {
     start = vargv[vargc - 1];
     curr = start;
   }
@@ -686,9 +689,9 @@ try {
     // Keep track of the entity from the previous iteration
     prev = curr;
     // Because vargv isn't a typical array, we can't use acall() here
-    if (vargc < 3) curr = ppmod.get(vargv[0], curr);
-    else if (vargc == 3) curr = ppmod.get(vargv[0], vargv[1], curr);
-    else curr = ppmod.get(vargv[0], vargv[1], vargv[2], curr);
+    if (vargc < 3) curr = bppmod.get(vargv[0], curr);
+    else if (vargc == 3) curr = bppmod.get(vargv[0], vargv[1], curr);
+    else curr = bppmod.get(vargv[0], vargv[1], vargv[2], curr);
     // Run until we end up where we started
   } while (curr != start);
 
@@ -698,7 +701,7 @@ try {
 }
 
 // Calls an input on an entity with optional default arguments
-::ppmod.fire <- function (ent, action = "Use", value = "", delay = 0.0, activator = null, caller = null) {
+::bppmod.fire <- function (ent, action = "Use", value = "", delay = 0.0, activator = null, caller = null) {
 
   // If a string was provided, use DoEntFire
   if (typeof ent == "string") {
@@ -709,23 +712,23 @@ try {
     if (!ent.IsValid()) throw "fire: Invalid entity handle";
     return EntFireByHandle(ent, action, value.tostring(), delay, activator, caller);
   }
-  // If any other argument was provided, use ppmod.forent to search for handles
-  ppmod.forent(ent, function (curr):(action, value, delay, activator, caller) {
-    ppmod.fire(curr, action, value, delay, activator, caller);
+  // If any other argument was provided, use bppmod.forent to search for handles
+  bppmod.forent(ent, function (curr):(action, value, delay, activator, caller) {
+    bppmod.fire(curr, action, value, delay, activator, caller);
   });
 
 }
 
 // Sets an entity keyvalue by automatically determining input type
-::ppmod.keyval <- function (ent, key, val) {
+::bppmod.keyval <- function (ent, key, val) {
 
   // Validate the key argument
   if (typeof key != "string") throw "keyval: Invalid key argument";
 
-  // If not provided with an entity handle, use ppmod.forent to search for handles
-  if (!ppmod.validate(ent)) {
-    return ppmod.forent(ent, function (curr):(key, val) {
-      ppmod.keyval(curr, key, val);
+  // If not provided with an entity handle, use bppmod.forent to search for handles
+  if (!bppmod.validate(ent)) {
+    return bppmod.forent(ent, function (curr):(key, val) {
+      bppmod.keyval(curr, key, val);
     });
   }
 
@@ -750,7 +753,7 @@ try {
 }
 
 // Sets entity spawn flags from the argument list
-::ppmod.flags <- function (ent, ...) {
+::bppmod.flags <- function (ent, ...) {
 
   // Sum up all entries in vargv
   local sum = 0;
@@ -758,34 +761,34 @@ try {
     sum += vargv[i];
   }
 
-  // Call ppmod.keyval to apply the SpawnFlags keyvalue
-  ppmod.keyval(ent, "SpawnFlags", sum);
+  // Call bppmod.keyval to apply the SpawnFlags keyvalue
+  bppmod.keyval(ent, "SpawnFlags", sum);
 
 }
 
 // Creates an output to fire on the specified target with optional default arguments
-::ppmod.addoutput <- function (ent, output, target, input = "Use", value = "", delay = 0, max = -1) {
+::bppmod.addoutput <- function (ent, output, target, input = "Use", value = "", delay = 0, max = -1) {
 
-  // If the target is not a string, wrap a ppmod.fire call inside of
-  // ppmod.addscript to simulate an output whose target is a ppmod.forent argument.
+  // If the target is not a string, wrap a bppmod.fire call inside of
+  // bppmod.addscript to simulate an output whose target is a bppmod.forent argument.
   if (typeof target != "string") {
-    return ppmod.addscript(ent, output, function ():(target, input, value) {
-      ppmod.fire(target, input, value, 0.0, activator, caller);
+    return bppmod.addscript(ent, output, function ():(target, input, value) {
+      bppmod.fire(target, input, value, 0.0, activator, caller);
     }, delay, max);
   }
   // Otherwise, assign the output as a keyvalue separated by x1B characters.
   // This seems to be how entity outputs are represented internally, and
   // should in theory be faster and safer than using the AddOutput input.
-  ppmod.keyval(ent, output, target+"\x1B"+input+"\x1B"+value+"\x1B"+delay+"\x1B"+max);
+  bppmod.keyval(ent, output, target+"\x1B"+input+"\x1B"+value+"\x1B"+delay+"\x1B"+max);
 
 }
 
 // Keep track of a "script queue" for inline functions
 // This is used to keep global references to functions for use as callbacks
-::ppmod.scrq <- [];
+::bppmod.scrq <- [];
 
 // Adds a function to the script queue, returns its script queue index
-::ppmod.scrq_add <- function (scr, max = -1) {
+::bppmod.scrq_add <- function (scr, max = -1) {
 
   // If the input is a string, compile it into a function
   if (typeof scr == "string") scr = compilestring(scr);
@@ -793,31 +796,31 @@ try {
   if (typeof scr != "function") throw "scrq_add: Invalid script argument";
 
   // Look for an free space in the script queue array
-  for (local i = 0; i < ppmod.scrq.len(); i ++) {
-    if (ppmod.scrq[i] == null) {
-      ppmod.scrq[i] = [scr, max];
+  for (local i = 0; i < bppmod.scrq.len(); i ++) {
+    if (bppmod.scrq[i] == null) {
+      bppmod.scrq[i] = [scr, max];
       return i;
     }
   }
   // If no free space was found, push it to the end of the array
-  ppmod.scrq.push([scr, max]);
-  return ppmod.scrq.len() - 1;
+  bppmod.scrq.push([scr, max]);
+  return bppmod.scrq.len() - 1;
 
 }
 
 // Retrieves a function from the script queue, deleting it if needed
-::ppmod.scrq_get <- function (idx) {
+::bppmod.scrq_get <- function (idx) {
 
   // Validate the input script index
-  if (!(idx in ppmod.scrq)) throw "scrq_get: Invalid script index";
-  if (ppmod.scrq[idx] == null) throw "scrq_get: Invalid script index";
+  if (!(idx in bppmod.scrq)) throw "scrq_get: Invalid script index";
+  if (bppmod.scrq[idx] == null) throw "scrq_get: Invalid script index";
 
   // Retrieve the function from the queue
-  local scr = ppmod.scrq[idx][0];
+  local scr = bppmod.scrq[idx][0];
 
   // Clear the script queue index if the max amount of retrievals has been reached
-  if (ppmod.scrq[idx][1] > 0 && --ppmod.scrq[idx][1] == 0) {
-    ppmod.scrq[idx] = null;
+  if (bppmod.scrq[idx][1] > 0 && --bppmod.scrq[idx][1] == 0) {
+    bppmod.scrq[idx] = null;
   }
 
   // Return the script queue function
@@ -826,56 +829,56 @@ try {
 }
 
 // Adds a script as an output to an entity with optional default arguments
-::ppmod.addscript <- function (ent, output, scr = "", delay = 0, max = -1) {
+::bppmod.addscript <- function (ent, output, scr = "", delay = 0, max = -1) {
 
   if (typeof scr == "function") {
     // If a function was provided, add it to the script queue
-    local scrq_idx = ppmod.scrq_add(scr, max);
-    local scrq_arr = ppmod.scrq[scrq_idx];
+    local scrq_idx = bppmod.scrq_add(scr, max);
+    local scrq_arr = bppmod.scrq[scrq_idx];
     // Attach a destructor to clear the scrq entry when the entity dies
-    ppmod.onkill(ent, function ():(scrq_idx, scrq_arr) {
-      if (ppmod.scrq[scrq_idx] != scrq_arr) return;
-      ppmod.scrq[scrq_idx] = null;
+    bppmod.onkill(ent, function ():(scrq_idx, scrq_arr) {
+      if (bppmod.scrq[scrq_idx] != scrq_arr) return;
+      bppmod.scrq[scrq_idx] = null;
     });
     // Convert the argument to a scrq_get call string
-    scr = "ppmod.scrq_get(" + scrq_idx + ")()";
+    scr = "bppmod.scrq_get(" + scrq_idx + ")()";
   }
-  // Attach the output as a keyvalue, similar to how ppmod.addoutput does it
+  // Attach the output as a keyvalue, similar to how bppmod.addoutput does it
   // The script is targeted to worldspawn, as that makes activator and caller available
-  ppmod.keyval(ent, output, "worldspawn\x001BRunScriptCode\x1B"+scr+"\x1B"+delay+"\x1B"+max);
+  bppmod.keyval(ent, output, "worldspawn\x001BRunScriptCode\x1B"+scr+"\x1B"+delay+"\x1B"+max);
 
 }
 
 // Runs the specified script in the entity's script scope
-::ppmod.runscript <- function (ent, scr) {
+::bppmod.runscript <- function (ent, scr) {
 
   // If a function was provided, add it to the script queue
   if (typeof scr == "function") {
-    scr = "ppmod.scrq_get(" + ppmod.scrq_add(scr, 1) + ")()";
+    scr = "bppmod.scrq_get(" + bppmod.scrq_add(scr, 1) + ")()";
   }
   // Fire the RunScriptCode output on the input entity
-  ppmod.fire(ent, "RunScriptCode", scr);
+  bppmod.fire(ent, "RunScriptCode", scr);
 
 }
 
 // Assigns or clears the movement parent of an entity
-::ppmod.setparent <- function (child, _parent) {
+::bppmod.setparent <- function (child, _parent) {
 
   // If the new parent value is falsy, clear the parent
-  if (!_parent) return ppmod.fire(child, "ClearParent");
+  if (!_parent) return bppmod.fire(child, "ClearParent");
   // Validate the parent handle
-  if (!ppmod.validate(_parent)) throw "setparent: Invalid parent handle";
+  if (!bppmod.validate(_parent)) throw "setparent: Invalid parent handle";
   // If a valid parent handle was provided, assign the parent
-  return ppmod.fire(child, "SetParent", "!activator", 0, _parent);
+  return bppmod.fire(child, "SetParent", "!activator", 0, _parent);
 
 }
 
 // Iterates over the children of an entity
-::ppmod.getchild <- function (_parent, ent = null) {
+::bppmod.getchild <- function (_parent, ent = null) {
 
   // Validate input arguments
-  if (!ppmod.validate(_parent)) throw "getchild: Invalid parent entity";
-  if (ent != null && !ppmod.validate(ent)) throw "getchild: Invalid iterator entity";
+  if (!bppmod.validate(_parent)) throw "getchild: Invalid parent entity";
+  if (ent != null && !bppmod.validate(ent)) throw "getchild: Invalid iterator entity";
 
   // Iterate over all world entities, looking for those with a common parent
   while (ent = Entities.Next(ent)) {
@@ -888,17 +891,17 @@ try {
 }
 
 // Hooks an entity input, running a test function each time it's fired
-::ppmod.hook <- function (ent, input, scr, max = -1) {
+::bppmod.hook <- function (ent, input, scr, max = -1) {
 
   // Validate arguments
   if (typeof input != "string") throw "hook: Invalid input argument";
   if (typeof max != "integer") throw "hook: Invalid max argument";
   if (typeof scr == "string") scr = compilestring(scr);
   if (scr != null && typeof scr != "function") throw "hook: Invalid script argument";
-  // If a valid entity handle was not provided, find handles with ppmod.forent
-  if (!ppmod.validate(ent)) {
-    return ppmod.forent(ent, function (curr):(input, scr, max) {
-      ppmod.hook(curr, input, scr, max);
+  // If a valid entity handle was not provided, find handles with bppmod.forent
+  if (!bppmod.validate(ent)) {
+    return bppmod.forent(ent, function (curr):(input, scr, max) {
+      bppmod.hook(curr, input, scr, max);
     });
   }
   // Ensure a script scope exists for the entity
@@ -913,16 +916,16 @@ try {
 }
 
 // Attaches a function to be called when the entity is Kill-ed
-::ppmod.onkill <- function (ent, scr) {
+::bppmod.onkill <- function (ent, scr) {
 
   // Validate arguments
   if (typeof scr == "string") scr = compilestring(scr);
   if (typeof scr != "function") throw "onkill: Invalid script argument";
 
-  // If a valid entity handle was not provided, find handles with ppmod.forent
-  if (!ppmod.validate(ent)) {
-    return ppmod.forent(ent, function (curr):(scr) {
-      ppmod.onkill(curr, scr);
+  // If a valid entity handle was not provided, find handles with bppmod.forent
+  if (!bppmod.validate(ent)) {
+    return bppmod.forent(ent, function (curr):(scr) {
+      bppmod.onkill(curr, scr);
     });
   }
 
@@ -954,7 +957,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
   try {
     // Allows for setting keyvalues as if they were object properties
     entclasses[i]._set <- function (key, val) {
-      // This is mostly identical to ppmod.keyval
+      // This is mostly identical to bppmod.keyval
       // However, having this be separate is slightly more performant
       if (typeof key != "string") throw "Invalid slot name";
       switch (typeof val) {
@@ -977,35 +980,35 @@ for (local i = 0; i < entclasses.len(); i ++) {
     entclasses[i]._get <- function (key) {
       return function (value = "", delay = 0.0, activator = null, caller = null):(key) {
         // If a function was provided, treat `key` as an output
-        if (typeof value == "function") return ::ppmod.addscript(this, key, value, delay, activator);
+        if (typeof value == "function") return ::bppmod.addscript(this, key, value, delay, activator);
         // Otherwise, treat `key` as an input
         return ::EntFireByHandle(this, key, value.tostring(), delay, activator, caller);
       }
     }
-    // Self-explanatory wrappers for ppmod functions
+    // Self-explanatory wrappers for bppmod functions
     entclasses[i].Fire <- function (action = "Use", value = "", delay = 0.0, activator = null, caller = null) {
       return ::EntFireByHandle(this, action, value.tostring(), delay, activator, caller);
     }
     entclasses[i].AddOutput <- function (output, target, input = "Use", value = "", delay = 0, max = -1) {
-      return ::ppmod.addoutput(this, output, target, input, value, delay, max);
+      return ::bppmod.addoutput(this, output, target, input, value, delay, max);
     }
     entclasses[i].AddScript <- function (output, scr = "", delay = 0, max = -1) {
-      return ::ppmod.addscript(this, output, scr, delay, max);
+      return ::bppmod.addscript(this, output, scr, delay, max);
     }
     entclasses[i].RunScript <- function (scr) {
-      return ::ppmod.runscript(this, scr);
+      return ::bppmod.runscript(this, scr);
     }
     entclasses[i].SetMoveParent <- function (_parent) {
-      return ::ppmod.setparent(this, _parent);
+      return ::bppmod.setparent(this, _parent);
     }
     entclasses[i].NextMoveChild <- function (child = null) {
-      return ::ppmod.getchild(this, child);
+      return ::bppmod.getchild(this, child);
     }
     entclasses[i].SetHook <- function (input, scr, max = -1) {
-      return ::ppmod.hook(this, input, scr, max);
+      return ::bppmod.hook(this, input, scr, max);
     }
     entclasses[i].OnKill <- function (scr) {
-      return ::ppmod.onkill(this, scr);
+      return ::bppmod.onkill(this, scr);
     }
     // Overwrite GetScriptScope to first create/validate the scope
     // This makes it safer and more comfortable to to access script scopes
@@ -1078,19 +1081,19 @@ for (local i = 0; i < entclasses.len(); i ++) {
         local cube = this;
         // Subtract the position on the next tick
         return ::ppromise(function (resolve, reject):(pos, cube) {
-          ppmod.wait(function ():(pos, resolve, cube) {
-            if (!ppmod.validate(cube)) resolve(Vector());
+          bppmod.wait(function ():(pos, resolve, cube) {
+            if (!bppmod.validate(cube)) resolve(Vector());
             resolve((cube.GetOrigin() - pos) * (1.0 / FrameTime()));
           }, FrameTime());
         });
       }
-      // Override SetVelocity to call ppmod.push instead
+      // Override SetVelocity to call bppmod.push instead
       entclasses[i].SetVelocity <- function (vec) {
         // First, obtain the current velocity
         local cube = this;
         this.GetVelocity().then(function (vel):(vec, cube) {
-          // Then, compute the difference and use ppmod.push
-          return ::ppmod.push(cube, vec - vel);
+          // Then, compute the difference and use bppmod.push
+          return ::bppmod.push(cube, vec - vel);
         });
       }
     }
@@ -1111,7 +1114,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
       case CTriggerCamera: classname = "CTriggerCamera"; break;
     }
     // Then, print a warning to the console
-    printl("[ppmod] Warning: failed to modify " + classname + " class: " + e);
+    printl("[bppmod] Warning: failed to modify " + classname + " class: " + e);
   }
 }
 
@@ -1120,14 +1123,14 @@ for (local i = 0; i < entclasses.len(); i ++) {
 /****************/
 
 // Creates a logic_relay to use as a timer for calling the input script
-::ppmod.wait <- function (scr, sec, name = "") {
+::bppmod.wait <- function (scr, sec, name = "") {
 
   // Create an optionally named logic_relay
   local relay = Entities.CreateByClassname("logic_relay");
   if (name) relay.__KeyValueFromString("Targetname", name);
 
-  // Use ppmod.addscript to attach the callback script
-  ppmod.addscript(relay, "OnTrigger", scr, 0, 1);
+  // Use bppmod.addscript to attach the callback script
+  bppmod.addscript(relay, "OnTrigger", scr, 0, 1);
   // Trigger and destroy the relay after the specified amount of seconds
   EntFireByHandle(relay, "Trigger", "", sec, null, null);
   relay.__KeyValueFromInt("SpawnFlags", 1);
@@ -1138,14 +1141,14 @@ for (local i = 0; i < entclasses.len(); i ++) {
 }
 
 // Creates a logic_timer to use as a loop for the input script
-::ppmod.interval <- function (scr, sec = 0.0, name = "") {
+::bppmod.interval <- function (scr, sec = 0.0, name = "") {
 
   // Create an optionally named logic_timer
   local timer = Entities.CreateByClassname("logic_timer");
   if (name) timer.__KeyValueFromString("Targetname", name);
 
-  // Use ppmod.addscript to attach the callback script
-  ppmod.addscript(timer, "OnTimer", scr);
+  // Use bppmod.addscript to attach the callback script
+  bppmod.addscript(timer, "OnTimer", scr);
   // Configure the timer to run on the specified interval
   EntFireByHandle(timer, "RefireTime", sec.tostring(), 0.0, null, null);
   EntFireByHandle(timer, "Enable", "", 0.0, null, null);
@@ -1156,7 +1159,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
 }
 
 // Time the execution of the input script using console ticks
-::ppmod.ontick <- function (scr, pause = true, timeout = -1) {
+::bppmod.ontick <- function (scr, pause = true, timeout = -1) {
 
   // If the input is a string, compile it into a function
   if (typeof scr == "string") scr = compilestring(scr);
@@ -1164,29 +1167,29 @@ for (local i = 0; i < entclasses.len(); i ++) {
   if (typeof scr != "function") throw "ontick: Invalid script argument";
 
   // Add the input to the script queue
-  if (timeout == -1) scr = "ppmod.scrq_get(" + ppmod.scrq_add(scr, -1) + ")()";
-  else scr = "ppmod.scrq_get(" + ppmod.scrq_add(scr, 1) + ")()";
+  if (timeout == -1) scr = "bppmod.scrq_get(" + bppmod.scrq_add(scr, -1) + ")()";
+  else scr = "bppmod.scrq_get(" + bppmod.scrq_add(scr, 1) + ")()";
 
   // If the game is paused and pause == true, recurse on the next tick and exit
   if (pause && FrameTime() == 0.0) {
-    SendToConsole("script ppmod.ontick(\"" + scr + "\", true, " + timeout + ")");
+    SendToConsole("script bppmod.ontick(\"" + scr + "\", true, " + timeout + ")");
     return;
   }
 
   // A timeout of -1 indicates that the script should run on every tick, indefinitely
   if (timeout == -1) {
-    SendToConsole("script " + scr + ";script ppmod.ontick(\"" + scr + "\", " + pause + ")");
+    SendToConsole("script " + scr + ";script bppmod.ontick(\"" + scr + "\", " + pause + ")");
     return;
   }
   // If timeout has reached 0, call the attached script and exit
   if (timeout == 0) return SendToConsole("script " + scr);
   // Otherwise, recurse on the next tick with a decremented timeout
-  SendToConsole("script ppmod.ontick(\"" + scr + "\", " + pause + ", " + (timeout - 1) + ")");
+  SendToConsole("script bppmod.ontick(\"" + scr + "\", " + pause + ", " + (timeout - 1) + ")");
 
 }
 
 // Runs the input script on map start or save load
-::ppmod.onauto <- function (scr, onload = false) {
+::bppmod.onauto <- function (scr, onload = false) {
 
   // Create a logic_auto for listening to events on which to run the script
   local auto = Entities.CreateByClassname("logic_auto");
@@ -1198,7 +1201,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
     local ref = { interval = null };
 
     // Set up an interval to wait for blue (the host) to spawn
-    ref.interval = ppmod.interval(function ():(scr, ref) {
+    ref.interval = bppmod.interval(function ():(scr, ref) {
 
       // Find the host player using their special keyword
       local blue = Entities.FindByName(null, "!player_blue");
@@ -1216,7 +1219,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
       if (IsLocalSplitScreen()) {
         if (typeof scr == "string") return compilestring(scr)();
         // Wait for players to re-teleport
-        return ppmod.wait(scr, 1.5);
+        return bppmod.wait(scr, 1.5);
       }
 
       // Find the lowest significant point of the world's bounding box estimate
@@ -1236,7 +1239,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
       blue.SetOrigin(Vector(0, 0, lowest));
 
       // Set up an interval to wait for orange (the second player) to spawn
-      ref.interval = ppmod.interval(function ():(blue, lowest, scr, ref) {
+      ref.interval = bppmod.interval(function ():(blue, lowest, scr, ref) {
 
         // Find the second player using their special keyword
         local red = Entities.FindByClassname(null, "!player_orange");
@@ -1260,17 +1263,17 @@ for (local i = 0; i < entclasses.len(); i ++) {
   };
 
   // Attach the script to map start events
-  ppmod.addscript(auto, "OnNewGame", scr);
-  ppmod.addscript(auto, "OnMapTransition", scr);
+  bppmod.addscript(auto, "OnNewGame", scr);
+  bppmod.addscript(auto, "OnMapTransition", scr);
   // Optionally, attach to save load events
-  if (onload) ppmod.addscript(auto, "OnLoadGame", scr);
+  if (onload) bppmod.addscript(auto, "OnLoadGame", scr);
   // Return the logic_auto
   return auto;
 
 }
 
 // Pauses the game until the specified ppromise resolves
-::ppmod.preload <- function (promise):(ppromise_methods) {
+::bppmod.preload <- function (promise):(ppromise_methods) {
 
   // Validate the promise
   if (promise.then != ppromise_methods.then) throw "preload: Invalid promise argument";
@@ -1281,7 +1284,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
     // Pause the game
     SendToConsole("setpause");
 
-    local scrq_idx = ppmod.scrq_add(function ():(promise, resolve) {
+    local scrq_idx = bppmod.scrq_add(function ():(promise, resolve) {
       // Unpause the game once the promise resolves
       promise.then(function (_):(resolve) {
         SendToConsole("unpause");
@@ -1289,18 +1292,18 @@ for (local i = 0; i < entclasses.len(); i ++) {
       });
     }, 1);
     // Run the promise as a command to ensure it's in sync with the pause
-    SendToConsole("script ppmod.scrq_get("+ scrq_idx +")()");
+    SendToConsole("script bppmod.scrq_get("+ scrq_idx +")()");
 
   });
 
 };
 
 // Works around script timeouts by catching the exception they throw
-::ppmod.detach <- function (scr, args, stack = null) {
+::bppmod.detach <- function (scr, args, stack = null) {
 
   // Validate the callback argument
   if (typeof scr != "function") throw "detach: Invalid callback argument";
-  // Retrieve a stack trace to the line on which ppmod.detach was called
+  // Retrieve a stack trace to the line on which bppmod.detach was called
   if (stack == null) stack = getstackinfos(2);
 
   // Run the input function in a try/catch block
@@ -1309,11 +1312,11 @@ for (local i = 0; i < entclasses.len(); i ++) {
 
     // If the exception is caused by SQQuerySuspend, recurse
     if (e.find("Script terminated by SQQuerySuspend") != null) {
-      return ppmod.detach(scr, args, stack);
+      return bppmod.detach(scr, args, stack);
     }
     // Otherwise, mimic error output using the stack trace
     printl("\nAN ERROR HAS OCCURED [" + e + "]");
-    printl("Caught within ppmod.detach in file " + stack.src + " on line " + stack.line + "\n");
+    printl("Caught within bppmod.detach in file " + stack.src + " on line " + stack.line + "\n");
 
   }
 
@@ -1324,7 +1327,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
 /********************/
 
 // Provides more information about and ways to interact with a player
-::ppmod.player <- class {
+::bppmod.player <- class {
 
   // Holds the player entity
   ent = null;
@@ -1363,15 +1366,15 @@ for (local i = 0; i < entclasses.len(); i ++) {
     EntFireByHandle(this.eyes, "SetMeasureTarget", newname, 0.0, null, null);
     // Use the script queue to reset the player's targetname
     // This retains full accuracy, as to not drop any special characters
-    local scrqidx = ppmod.scrq_add(function (self):(oldname) { self.__KeyValueFromString("Targetname", oldname) }, 1);
-    EntFireByHandle(this.ent, "RunScriptCode", "ppmod.scrq_get("+ scrqidx +")(self)", 0.0, null, null);
+    local scrqidx = bppmod.scrq_add(function (self):(oldname) { self.__KeyValueFromString("Targetname", oldname) }, 1);
+    EntFireByHandle(this.ent, "RunScriptCode", "bppmod.scrq_get("+ scrqidx +")(self)", 0.0, null, null);
 
   };
 
   constructor (player) {
 
     // Validate the input entity handle
-    if (!ppmod.validate(player)) throw "player: Invalid entity handle";
+    if (!bppmod.validate(player)) throw "player: Invalid entity handle";
     if (!(player instanceof CBasePlayer)) throw "player: Entity is not a player";
     // Keep track of the constructing player handle
     this.ent = player;
@@ -1403,7 +1406,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
     target_eyes_this();
     // The MeasureTarget must be updated on each game load
     local auto = Entities.CreateByClassname("logic_auto");
-    auto.__KeyValueFromString("OnMapSpawn", "!self\x001BRunScriptCode\x001Bppmod.scrq_get(" + ppmod.scrq_add(target_eyes_this, -1) + ")()\x001B0\x001B-1");
+    auto.__KeyValueFromString("OnMapSpawn", "!self\x001BRunScriptCode\x001Bbppmod.scrq_get(" + bppmod.scrq_add(target_eyes_this, -1) + ")()\x001B0\x001B-1");
     // Enable the logic_measure_movement entity
     EntFireByHandle(this.eyes, "Enable", "", 0.0, null, null);
     // Set the roll angle of this.eyes to a silly value
@@ -1411,7 +1414,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
     this.eyes.SetAngles(0.0, 0.0, 370.0);
 
     // Some routines have to be performed in a tick loop
-    ppmod.interval((function () {
+    bppmod.interval((function () {
 
       /******************************************
        * Monitor whether the player is grounded *
@@ -1482,7 +1485,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
     }).bindenv(this));
 
     // Set up a trigger_gravity for modifying the player's local gravity
-    ppmod.trigger(this.ent.GetOrigin() + Vector(0, 0, 36.5), Vector(16, 16, 36), "trigger_gravity", Vector(), true).then((function (trigger) {
+    bppmod.trigger(this.ent.GetOrigin() + Vector(0, 0, 36.5), Vector(16, 16, 36), "trigger_gravity", Vector(), true).then((function (trigger) {
       // Disable the trigger by default
       trigger.__KeyValueFromFloat("Gravity", 1.0);
       EntFireByHandle(trigger, "Disable", "", 0.0, null, null);
@@ -1499,11 +1502,11 @@ for (local i = 0; i < entclasses.len(); i ++) {
    */
   function init () {
     return ppromise((function (resolve, reject) {
-      this.initinterval = ppmod.interval((function ():(resolve) {
+      this.initinterval = bppmod.interval((function ():(resolve) {
         // Check for proper setup of eyes and gravtrig
         if (this.eyes.GetAngles().z == 370.0) return;
         if (!this.gravtrig) return;
-        // Stop the interval and resolve with the ppmod.player instance
+        // Stop the interval and resolve with the bppmod.player instance
         this.initinterval.Destroy();
         resolve(this);
       }).bindenv(this));
@@ -1528,8 +1531,8 @@ for (local i = 0; i < entclasses.len(); i ++) {
 
   // Attaches a function to the event of the player using the jump input
   function onjump (scr) {
-    local scrqstr = "ppmod.scrq_get(" + ppmod.scrq_add(scr) + ")()";
-    ppmod.addoutput(this.proxy, "OnJump", this.ent, "RunScriptCode", "if(self==activator)" + scrqstr);
+    local scrqstr = "bppmod.scrq_get(" + bppmod.scrq_add(scr) + ")()";
+    bppmod.addoutput(this.proxy, "OnJump", this.ent, "RunScriptCode", "if(self==activator)" + scrqstr);
   }
 
   // Attaches a function to the event of the player landing on solid ground
@@ -1543,14 +1546,14 @@ for (local i = 0; i < entclasses.len(); i ++) {
 
   // Attaches a function to the event of the player finishing the crouching animation
   function onduck (scr) {
-    local scrqstr = "ppmod.scrq_get(" + ppmod.scrq_add(scr) + ")()";
-    ppmod.addoutput(this.proxy, "OnDuck", this.ent, "RunScriptCode", "if(self==activator)" + scrqstr);
+    local scrqstr = "bppmod.scrq_get(" + bppmod.scrq_add(scr) + ")()";
+    bppmod.addoutput(this.proxy, "OnDuck", this.ent, "RunScriptCode", "if(self==activator)" + scrqstr);
   }
 
   // Attaches a function to the event of the player finishing the uncrouching animation
   function onunduck (scr) {
-    local scrqstr = "ppmod.scrq_get(" + ppmod.scrq_add(scr) + ")()";
-    ppmod.addoutput(this.proxy, "OnUnDuck", this.ent, "RunScriptCode", "if(self==activator)" + scrqstr);
+    local scrqstr = "bppmod.scrq_get(" + bppmod.scrq_add(scr) + ")()";
+    bppmod.addoutput(this.proxy, "OnUnDuck", this.ent, "RunScriptCode", "if(self==activator)" + scrqstr);
   }
 
   // Returns true if the player is in the process of ducking/unducking, false otherwise
@@ -1563,7 +1566,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
     if (typeof str != "string") throw "oninput: Invalid command string argument";
     if (str[0] == '+') str = "pressed" + str.slice(1);
     else str = "unpressed" + str.slice(1);
-    ppmod.addscript(this.gameui, str, scr);
+    bppmod.addscript(this.gameui, str, scr);
     // Activate the entity only once an output has been added
     // This prevents prediction from being unnecessarily turned off in co-op
     EntFireByHandle(this.gameui, "Activate", "", 0.0, this.ent, null);
@@ -1572,7 +1575,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
   // Sets the player's gravity scale to the given value
   function gravity (factor) {
     // Ensure the gravity trigger exists
-    if (!ppmod.validate(this.gravtrig)) throw "gravity: No valid gravity trigger";
+    if (!bppmod.validate(this.gravtrig)) throw "gravity: No valid gravity trigger";
     // Disable the trigger if factor is 1.0 (default), enable otherwise
     if (factor == 1.0) EntFireByHandle(this.gravtrig, "Disable", "", 0.0, null, null);
     else EntFireByHandle(this.gravtrig, "Enable", "", 0.0, null, null);
@@ -1640,17 +1643,17 @@ for (local i = 0; i < entclasses.len(); i ++) {
 
 }
 
-// Constructor for the ppmod.portal prototypal class
+// Constructor for the bppmod.portal prototypal class
 // Provides utilities for working with portals
-::ppmod.portal <- function (portal) {
+::bppmod.portal <- function (portal) {
 
   // Most properties are stored in the portal entity's script scope
   if (!portal.ValidateScriptScope()) throw "portal: Could not validate script scope";
   local scope = portal.GetScriptScope();
   // If an instance already exists in the script scope, return that
-  if ("ppmod_portal" in scope) return scope.ppmod_portal;
+  if ("bppmod_portal" in scope) return scope.bppmod_portal;
   // Otherwise, create a blank table for the prototypal instance
-  scope.ppmod_portal <- {};
+  scope.bppmod_portal <- {};
 
   // Create a trigger for detecting collisions with the portal
   local trigger = Entities.CreateByClassname("trigger_multiple");
@@ -1669,14 +1672,14 @@ for (local i = 0; i < entclasses.len(); i ++) {
   EntFireByHandle(trigger, "Enable", "", 0.0, null, null);
 
   // Keeps track of when the last teleport occurred
-  scope.ppmod_portal.tptime <- 0.0;
+  scope.bppmod_portal.tptime <- 0.0;
   // Stores all attached OnTeleport functions
-  scope.ppmod_portal.tpfunc <- [];
+  scope.bppmod_portal.tpfunc <- [];
 
   // Manages trigger OnEndTouch events (something leaving the trigger volume)
-  local scrq_idx = ppmod.scrq_add(function (ent):(scope) {
+  local scrq_idx = bppmod.scrq_add(function (ent):(scope) {
     // Using runscript lets us push this to the end of the entity I/O queue
-    ppmod.runscript("worldspawn", function ():(ent, scope) {
+    bppmod.runscript("worldspawn", function ():(ent, scope) {
 
       /**
        * Whenever an entity teleports through a portal, the
@@ -1686,27 +1689,27 @@ for (local i = 0; i < entclasses.len(); i ++) {
        * same entity. This lets us retrieve it as the activator.
        */
       local ticks_now = (Time() / FrameTime()).tointeger();
-      local ticks_tp = (scope.ppmod_portal.tptime / FrameTime()).tointeger();
+      local ticks_tp = (scope.bppmod_portal.tptime / FrameTime()).tointeger();
 
       // Check if the two time reports match
       // Currently allows for a 1 tick tolerance, ideally 0 one day
       if (ticks_now - ticks_tp > 1) return;
 
       // If it did, something must've teleported - call attached functions
-      for (local i = 0; i < scope.ppmod_portal.tpfunc.len(); i ++) {
-        scope.ppmod_portal.tpfunc[i](ent);
+      for (local i = 0; i < scope.bppmod_portal.tpfunc.len(); i ++) {
+        scope.bppmod_portal.tpfunc[i](ent);
       }
 
     });
   }, -1);
 
   // Attach OnEndTouch and OnEntityTeleportFromMe outputs to the trigger and portal, respectively
-  trigger.__KeyValueFromString("OnEndTouch", "worldspawn\x001BRunScriptCode\x001Bppmod.scrq_get(" + scrq_idx + ")(activator)\x001B0\x001B-1");
-  portal.__KeyValueFromString("OnEntityTeleportFromMe", "!self\x001BRunScriptCode\x001Bself.GetScriptScope().ppmod_portal.tptime<-Time()\x001B0\x001B-1");
+  trigger.__KeyValueFromString("OnEndTouch", "worldspawn\x001BRunScriptCode\x001Bbppmod.scrq_get(" + scrq_idx + ")(activator)\x001B0\x001B-1");
+  portal.__KeyValueFromString("OnEntityTeleportFromMe", "!self\x001BRunScriptCode\x001Bself.GetScriptScope().bppmod_portal.tptime<-Time()\x001B0\x001B-1");
 
   // Attaches a function to the event of a portal teleporting something
-  scope.ppmod_portal.OnTeleport <- function (func):(scope) {
-    scope.ppmod_portal.tpfunc.push(func);
+  scope.bppmod_portal.OnTeleport <- function (func):(scope) {
+    scope.bppmod_portal.tpfunc.push(func);
   };
 
   // Internal utility function - sets up a new func_portal_detector
@@ -1730,27 +1733,27 @@ for (local i = 0; i < entclasses.len(); i ++) {
   };
 
   // Returns a ppromise that resolves to the portal's color index
-  scope.ppmod_portal.GetColor <- function ():(new_detector) {
+  scope.bppmod_portal.GetColor <- function ():(new_detector) {
     return ppromise(function (resolve, reject):(new_detector) {
       // Add the resolve callback to the script queue
-      local scrq_idx = ppmod.scrq_add(resolve, 1);
+      local scrq_idx = bppmod.scrq_add(resolve, 1);
       // Create a detector and listen for its OnStartTouchPortalX inputs
       local detector = new_detector(1);
-      detector.__KeyValueFromString("OnStartTouchPortal1", "!self\x001BRunScriptCode\x001Bppmod.scrq_get(" + scrq_idx + ")(1);self.Destroy()\x001B0\x001B1");
-      detector.__KeyValueFromString("OnStartTouchPortal2", "!self\x001BRunScriptCode\x001Bppmod.scrq_get(" + scrq_idx + ")(2);self.Destroy()\x001B0\x001B1");
+      detector.__KeyValueFromString("OnStartTouchPortal1", "!self\x001BRunScriptCode\x001Bbppmod.scrq_get(" + scrq_idx + ")(1);self.Destroy()\x001B0\x001B1");
+      detector.__KeyValueFromString("OnStartTouchPortal2", "!self\x001BRunScriptCode\x001Bbppmod.scrq_get(" + scrq_idx + ")(2);self.Destroy()\x001B0\x001B1");
     });
   };
 
   // Returns a ppromise that resolves to true if the portal is active, false otherwise
-  scope.ppmod_portal.GetActivatedState <- function ():(new_detector) {
+  scope.bppmod_portal.GetActivatedState <- function ():(new_detector) {
     return ppromise(function (resolve, reject):(new_detector) {
       // Add the resolve callback to the script queue
-      local scrq_idx = ppmod.scrq_add(resolve, 1);
+      local scrq_idx = bppmod.scrq_add(resolve, 1);
       // Create a detector and listen for its OnStartTouchLinkedPortal output
       local detector = new_detector(1);
-      detector.__KeyValueFromString("OnStartTouchLinkedPortal", "!self\x001BRunScriptCode\x001Bppmod.scrq_get(" + scrq_idx + ")(true);self.Destroy()\x001B0\x001B1");
+      detector.__KeyValueFromString("OnStartTouchLinkedPortal", "!self\x001BRunScriptCode\x001Bbppmod.scrq_get(" + scrq_idx + ")(true);self.Destroy()\x001B0\x001B1");
       // Connect OnUser1 to resolve(false)
-      detector.__KeyValueFromString("OnUser1", "!self\x001BRunScriptCode\x001Bif(self.IsValid())ppmod.scrq_get(" + scrq_idx + ")(false)\x001B0\x001B1");
+      detector.__KeyValueFromString("OnUser1", "!self\x001BRunScriptCode\x001Bif(self.IsValid())bppmod.scrq_get(" + scrq_idx + ")(false)\x001B0\x001B1");
       detector.__KeyValueFromString("OnUser1", "!self\x001BKill\x001B\x001B0\x001B1");
       // Call FireUser1, which sets up a sort of race condition
       // If OnStartTouchLinkedPortal gets there first, this won't do anything
@@ -1759,7 +1762,7 @@ for (local i = 0; i < entclasses.len(); i ++) {
   };
 
   // Returns a ppromise that resolves to the linkage group ID of the portal
-  scope.ppmod_portal.GetLinkageGroupID <- function ():(new_detector) {
+  scope.bppmod_portal.GetLinkageGroupID <- function ():(new_detector) {
     return ppromise(function (resolve, reject):(new_detector) {
 
       // Create a detector that activates only for a specific linkage group
@@ -1781,9 +1784,9 @@ for (local i = 0; i < entclasses.len(); i ++) {
       };
 
       // Store all relevant parameters in the script queue
-      local scrq_idx_resolve = ppmod.scrq_add(resolve, 1);
-      local scrq_idx_params = ppmod.scrq_add(params, 1);
-      local scrq_idx_check = ppmod.scrq_add(check, -1);
+      local scrq_idx_resolve = bppmod.scrq_add(resolve, 1);
+      local scrq_idx_params = bppmod.scrq_add(params, 1);
+      local scrq_idx_check = bppmod.scrq_add(check, -1);
 
       /**
        * If the detector outputs OnStartTouchPortal, we resolve with the
@@ -1791,8 +1794,8 @@ for (local i = 0; i < entclasses.len(); i ++) {
        * the detector. Otherwise, if OnUser1 is outputted first, we
        * continue iterating until the right linkage ID is found.
        */
-      detector.__KeyValueFromString("OnStartTouchPortal", "!self\x001BRunScriptCode\x001Bppmod.scrq_get(" + scrq_idx_resolve + ")(ppmod.scrq_get(" + scrq_idx_params + ").id);ppmod.scrq[" + scrq_idx_check + "] = null;self.Destroy()\x001B0\x001B1");
-      detector.__KeyValueFromString("OnUser1", "!self\x001BRunScriptCode\x001Bif(self.IsValid())ppmod.scrq_get(" + scrq_idx_check + ")()\x001B0\x001B-1");
+      detector.__KeyValueFromString("OnStartTouchPortal", "!self\x001BRunScriptCode\x001Bbppmod.scrq_get(" + scrq_idx_resolve + ")(bppmod.scrq_get(" + scrq_idx_params + ").id);bppmod.scrq[" + scrq_idx_check + "] = null;self.Destroy()\x001B0\x001B1");
+      detector.__KeyValueFromString("OnUser1", "!self\x001BRunScriptCode\x001Bif(self.IsValid())bppmod.scrq_get(" + scrq_idx_check + ")()\x001B0\x001B-1");
 
       // Call FireUser1 to start iterating through linkage IDs
       EntFireByHandle(detector, "FireUser1", "", 0.0, null, null);
@@ -1801,10 +1804,10 @@ for (local i = 0; i < entclasses.len(); i ++) {
   };
 
   // Returns a ppromise that resolves to a handle of this portal's active linked partner
-  scope.ppmod_portal.GetPartnerInstance <- function ():(portal, scope) {
+  scope.bppmod_portal.GetPartnerInstance <- function ():(portal, scope) {
     return ppromise(function (resolve, reject):(portal, scope) {
       // First, obtain the linkage group ID of this portal
-      scope.ppmod_portal.GetLinkageGroupID().then(function (id):(resolve, portal) {
+      scope.bppmod_portal.GetLinkageGroupID().then(function (id):(resolve, portal) {
 
         // Create a recursive function for finding the other portal
         local param = { next = null };
@@ -1817,8 +1820,8 @@ for (local i = 0; i < entclasses.len(); i ++) {
           // If we've encountered the same portal we started with, continue
           if (curr == portal) return param.next(curr);
 
-          // Obtain a ppmod.portal instance of the current portal
-          local pportal = ppmod.portal(curr);
+          // Obtain a bppmod.portal instance of the current portal
+          local pportal = bppmod.portal(curr);
           // Obtain the linkage group ID of the current portal
           pportal.GetLinkageGroupID().then(function (currid):(resolve, param, curr, pportal, id) {
 
@@ -1841,15 +1844,15 @@ for (local i = 0; i < entclasses.len(); i ++) {
     });
   };
 
-  // Return the ppmod.portal prototypal class instance
-  return scope.ppmod_portal;
+  // Return the bppmod.portal prototypal class instance
+  return scope.bppmod_portal;
 
 }
 
-// Stores all attached ppmod.onportal callback functions
+// Stores all attached bppmod.onportal callback functions
 local onportalfunc = [];
 // Attaches a function to be called on every portal shot
-::ppmod.onportal <- function (scr):(onportalfunc) {
+::bppmod.onportal <- function (scr):(onportalfunc) {
 
   // If the input is a string, compile it into a function
   if (typeof scr == "string") scr = compilestring(scr);
@@ -1863,9 +1866,9 @@ local onportalfunc = [];
   if (onportalfunc.len() != 1) return;
 
   // Handles portal OnPlacedSuccessfully outputs
-  local scrq_idx = ppmod.scrq_add(function (portal, first):(onportalfunc) {
+  local scrq_idx = bppmod.scrq_add(function (portal, first):(onportalfunc) {
     // Using runscript lets us push this to the end of the entity I/O queue
-    ppmod.runscript("worldspawn", function ():(portal, first, onportalfunc) {
+    bppmod.runscript("worldspawn", function ():(portal, first, onportalfunc) {
 
       local pgun = null;
       local color = null;
@@ -1884,11 +1887,11 @@ local onportalfunc = [];
          * fired one of its two portals at the same time as this check was
          * called. The input which matches the time marks the color index.
          */
-        if (scope.ppmod_onportal_time1 == Time()) {
+        if (scope.bppmod_onportal_time1 == Time()) {
           color = 1;
           break;
         }
-        if (scope.ppmod_onportal_time2 == Time()) {
+        if (scope.bppmod_onportal_time2 == Time()) {
           color = 2;
           break;
         }
@@ -1912,7 +1915,7 @@ local onportalfunc = [];
   }, -1);
 
   // Check for new portals and portalguns on an interval
-  ppmod.interval(function ():(scrq_idx) {
+  bppmod.interval(function ():(scrq_idx) {
 
     // Entity iterator
     local curr = null;
@@ -1925,15 +1928,15 @@ local onportalfunc = [];
 
       // Retrieve the script scope, continue if setup already performed
       local scope = curr.GetScriptScope();
-      if ("ppmod_onportal_time1" in scope) continue;
+      if ("bppmod_onportal_time1" in scope) continue;
 
       // Keep track of the time when each portal is fired
-      scope.ppmod_onportal_time1 <- 0.0;
-      scope.ppmod_onportal_time2 <- 0.0;
+      scope.bppmod_onportal_time1 <- 0.0;
+      scope.bppmod_onportal_time2 <- 0.0;
 
       // Attach the OnFiredPortalX functions for updating the time variables
-      curr.__KeyValueFromString("OnFiredPortal1", "!self\x001BRunScriptCode\x001Bself.GetScriptScope().ppmod_onportal_time1<-Time()\x001B0\x001B-1");
-      curr.__KeyValueFromString("OnFiredPortal2", "!self\x001BRunScriptCode\x001Bself.GetScriptScope().ppmod_onportal_time2<-Time()\x001B0\x001B-1");
+      curr.__KeyValueFromString("OnFiredPortal1", "!self\x001BRunScriptCode\x001Bself.GetScriptScope().bppmod_onportal_time1<-Time()\x001B0\x001B-1");
+      curr.__KeyValueFromString("OnFiredPortal2", "!self\x001BRunScriptCode\x001Bself.GetScriptScope().bppmod_onportal_time2<-Time()\x001B0\x001B-1");
 
     }
 
@@ -1945,15 +1948,15 @@ local onportalfunc = [];
 
       // Retrieve the script scope, continue if setup already performed
       local scope = curr.GetScriptScope();
-      if ("ppmod_onportal_flag" in scope) continue;
+      if ("bppmod_onportal_flag" in scope) continue;
 
       // Call the check function each time this portal is placed
-      curr.__KeyValueFromString("OnPlacedSuccessfully", "!self\x001BRunScriptCode\x001Bppmod.scrq_get("+ scrq_idx +")(self,false)\x001B0\x001B-1");
+      curr.__KeyValueFromString("OnPlacedSuccessfully", "!self\x001BRunScriptCode\x001Bbppmod.scrq_get("+ scrq_idx +")(self,false)\x001B0\x001B-1");
       // Call the check function now, indicating that this is the first encounter
-      ppmod.scrq_get(scrq_idx)(curr, true);
+      bppmod.scrq_get(scrq_idx)(curr, true);
 
       // Mark setup as complete
-      scope.ppmod_onportal_flag <- true;
+      scope.bppmod_onportal_flag <- true;
 
     }
 
@@ -1966,7 +1969,7 @@ local onportalfunc = [];
 /*******************/
 
 // Creates an entity using a console command, returns a promise that resolves to its handle
-::ppmod.create <- function (cmd, key = null) {
+::bppmod.create <- function (cmd, key = null) {
 
   // Validate the input arguments
   if (typeof cmd != "string") throw "create: Invalid command argument";
@@ -2008,20 +2011,20 @@ local onportalfunc = [];
   SendToConsole(cmd);
 
   /**
-   * Find the entity by passing the key to ppmod.prev. We send this as a
+   * Find the entity by passing the key to bppmod.prev. We send this as a
    * console command to take advantage of how console commands are executed
    * synchronously. This lets us make sure that the entity has spawned and
    * that we start looking for it as soon as we can.
    */
   return ppromise(function (resolve, reject):(cmd, key) {
-    SendToConsole("script ppmod.scrq_get("+ ppmod.scrq_add(resolve, 1) +")(ppmod.prev(\""+ key +"\"))");
+    SendToConsole("script bppmod.scrq_get("+ bppmod.scrq_add(resolve, 1) +")(bppmod.prev(\""+ key +"\"))");
   });
 
 }
 
 // Creates entities in bulk using game_player_equip
 // Returns a ppromise which resolves to a table of arrays with the created entities
-::ppmod.give <- function (ents) {
+::bppmod.give <- function (ents) {
 
   // Validate input table
   if (typeof ents != "table") throw "give: Invalid entity table";
@@ -2029,7 +2032,7 @@ local onportalfunc = [];
   // This procedure requires a player handle, get the first available one
   local player = Entities.FindByClassname(null, "player");
   // Validate the player instance found to prevent game crashes
-  if (!ppmod.validate(player)) throw "give: Failed to find valid player instance";
+  if (!bppmod.validate(player)) throw "give: Failed to find valid player instance";
   // Create a temporary game_player_equip instance
   local equip = Entities.CreateByClassname("game_player_equip");
 
@@ -2045,7 +2048,7 @@ local onportalfunc = [];
 
   return ppromise(function (resolve, reject):(ents) {
     // Use runscript to ensure we're retrieving the entities after creating them
-    ppmod.runscript("worldspawn", function ():(resolve, ents) {
+    bppmod.runscript("worldspawn", function ():(resolve, ents) {
 
       // Create an output table
       local output = {};
@@ -2077,20 +2080,20 @@ local onportalfunc = [];
 }
 
 // Creates a brush entity
-::ppmod.brush <- function (pos, size, type = "func_brush", ang = Vector(), create = false) {
+::bppmod.brush <- function (pos, size, type = "func_brush", ang = Vector(), create = false) {
 
   // Validate input arguments
   if (typeof pos != "Vector") throw "brush: Invalid position argument";
   if (typeof size != "Vector") throw "brush: Invalid size argument";
   if (size.x < 0.0 || size.y < 0.0 || size.z < 0.0) throw "brush: Size must be positive on all axis";
   // The type argument may be either an entity handle or a string
-  if (!ppmod.validate(type) && typeof type != "string") throw "brush: Invalid brush type argument";
+  if (!bppmod.validate(type) && typeof type != "string") throw "brush: Invalid brush type argument";
 
-  // If the create flag is set, use ppmod.create instead of CreateByClassname,
+  // If the create flag is set, use bppmod.create instead of CreateByClassname,
   // then call this same function again with the new brush and resolve with that.
   if (create) return ppromise(function (resolve, reject):(type, pos, size, ang) {
-    ppmod.create(type).then(function (ent):(pos, size, ang, resolve) {
-      resolve(ppmod.brush(pos, size, ent, ang));
+    bppmod.create(type).then(function (ent):(pos, size, ang, resolve) {
+      resolve(bppmod.brush(pos, size, ent, ang));
     });
   });
 
@@ -2114,20 +2117,20 @@ local onportalfunc = [];
 }
 
 // Creates a brush entity with trigger properties
-::ppmod.trigger <- function (pos, size, type = "trigger_once", ang = Vector(), create = false) {
+::bppmod.trigger <- function (pos, size, type = "trigger_once", ang = Vector(), create = false) {
 
-  // If the create flag is set, call ppmod.brush with the create flag set
+  // If the create flag is set, call bppmod.brush with the create flag set
   // and await a response, then call this function again.
   if (create) return ppromise(function (resolve, reject):(pos, size, type, ang) {
-    ppmod.brush(pos, size, type, ang, true).then(function (ent):(pos, size, ang, resolve) {
-      resolve(ppmod.trigger(pos, size, ent, ang));
+    bppmod.brush(pos, size, type, ang, true).then(function (ent):(pos, size, ang, resolve) {
+      resolve(bppmod.trigger(pos, size, ent, ang));
     });
   });
 
   // If trigger type was provided as a string, create a new brush
   // Otherwise, this will continue using `type` as a brush entity
   if (typeof type == "string") {
-    type = ppmod.brush(pos, size, type, ang);
+    type = bppmod.brush(pos, size, type, ang);
   }
 
   // Make the trigger non-solid
@@ -2148,7 +2151,7 @@ local onportalfunc = [];
 }
 
 // Creates and sets up an env_projectedtexture
-::ppmod.project <- function (material, pos, ang = Vector(90, 0, 0), simple = 0, far = 128.0) {
+::bppmod.project <- function (material, pos, ang = Vector(90, 0, 0), simple = 0, far = 128.0) {
 
   // Validate input arguments
   if (typeof material != "string") throw "project: Invalid material argument";
@@ -2174,7 +2177,7 @@ local onportalfunc = [];
 }
 
 // Creates and applies a static decal on a nearby surface
-::ppmod.decal <- function (material, pos, ang = Vector(90, 0, 0), far = 8.0) {
+::bppmod.decal <- function (material, pos, ang = Vector(90, 0, 0), far = 8.0) {
 
   // Validate input arguments
   if (typeof material != "string") throw "decal: Invalid material argument";
@@ -2197,19 +2200,19 @@ local onportalfunc = [];
 }
 
 // Set up some dummy entites for simplifying ray-through-portal calculations
-// This needs to happen exactly once, else it breaks, thus we use ppmod.onauto
-ppmod.onauto(function () {
+// This needs to happen exactly once, else it breaks, thus we use bppmod.onauto
+bppmod.onauto(function () {
   local p_anchor = Entities.CreateByClassname("info_teleport_destination");
   local r_anchor = Entities.CreateByClassname("info_teleport_destination");
 
-  p_anchor.__KeyValueFromString("Targetname", "ppmod_portals_p_anchor");
-  r_anchor.__KeyValueFromString("Targetname", "ppmod_portals_r_anchor");
+  p_anchor.__KeyValueFromString("Targetname", "bppmod_portals_p_anchor");
+  r_anchor.__KeyValueFromString("Targetname", "bppmod_portals_r_anchor");
 
-  EntFireByHandle(r_anchor, "SetParent", "ppmod_portals_p_anchor", 0.0, null, null);
+  EntFireByHandle(r_anchor, "SetParent", "bppmod_portals_p_anchor", 0.0, null, null);
 });
 
 // Casts a ray with options for collision with entities, the world, and portals
-::ppmod.ray <- class {
+::bppmod.ray <- class {
 
   // Output attributes
   fraction = null;
@@ -2358,7 +2361,7 @@ ppmod.onauto(function () {
       if (efrac == 0.0) break;
 
       // If a valid entity handle was provided, use cast_ent
-      if (ppmod.validate(arr[i])) {
+      if (bppmod.validate(arr[i])) {
         cast_ent(arr[i]);
         continue;
       }
@@ -2373,8 +2376,8 @@ ppmod.onauto(function () {
         i ++;
         continue;
       }
-      // If all else fails, try passing this to ppmod.forent
-      ppmod.forent(arr[i], cast_ent.bindenv(this));
+      // If all else fails, try passing this to bppmod.forent
+      bppmod.forent(arr[i], cast_ent.bindenv(this));
 
     }
 
@@ -2408,11 +2411,11 @@ ppmod.onauto(function () {
 
       if (ent) {
         // If a valid entity handle was provided, use cast_ent
-        if (ppmod.validate(ent)) cast_ent(ent);
+        if (bppmod.validate(ent)) cast_ent(ent);
         // If an array was provided, use cast_array
         else if (typeof ent == "array") cast_array(ent);
-        // If no valid handle was provided, find handles using ppmod.forent
-        else ppmod.forent(ent, cast_ent.bindenv(this));
+        // If no valid handle was provided, find handles using bppmod.forent
+        else bppmod.forent(ent, cast_ent.bindenv(this));
       }
 
       // Get the fraction of whichever was closest, the entity or world
@@ -2439,16 +2442,16 @@ ppmod.onauto(function () {
         // Otherwise, find the other linked portal
         local other = portals[index + (index % 2 == 0 ? 1 : -1)];
         // Validate both portal handles
-        if (!ppmod.validate(portal)) throw "ray: Invalid portal handle provided";
-        if (!ppmod.validate(other)) throw "ray: Invalid portal handle provided";
+        if (!bppmod.validate(portal)) throw "ray: Invalid portal handle provided";
+        if (!bppmod.validate(other)) throw "ray: Invalid portal handle provided";
 
         // Prefetch some vectors
         local otherpos = other.GetOrigin();
         local othervec = other.GetForwardVector();
 
         // Obtain anchor entities
-        local p_anchor = Entities.FindByName(null, "ppmod_portals_p_anchor");
-        local r_anchor = Entities.FindByName(null, "ppmod_portals_r_anchor");
+        local p_anchor = Entities.FindByName(null, "bppmod_portals_p_anchor");
+        local r_anchor = Entities.FindByName(null, "bppmod_portals_r_anchor");
 
         // Set portal anchor facing the entry portal
         p_anchor.SetForwardVector(Vector() - portal.GetForwardVector());
@@ -2503,11 +2506,11 @@ ppmod.onauto(function () {
 }
 
 // Returns true if the OBBs of two entities intersect, false otherwise
-::ppmod.intersect <- function (ent1, ent2) {
+::bppmod.intersect <- function (ent1, ent2) {
 
   // Validate input arguments
-  if (!ppmod.validate(ent1)) throw "intersect: Invalid first entity handle";
-  if (!ppmod.validate(ent2)) throw "intersect: Invalid second entity handle";
+  if (!bppmod.validate(ent1)) throw "intersect: Invalid first entity handle";
+  if (!bppmod.validate(ent2)) throw "intersect: Invalid second entity handle";
 
   // Get local axes for each entity
   // The forward, left, and up vectors represent the X, Y, and Z axes respectively
@@ -2585,7 +2588,7 @@ ppmod.onauto(function () {
 }
 
 // Returns true if the given point is inbounds, false otherwise
-::ppmod.inbounds <- function (point) {
+::bppmod.inbounds <- function (point) {
 
   // Validate input argument
   if (typeof point != "Vector") throw "inbounds: Invalid point argument";
@@ -2605,10 +2608,10 @@ ppmod.onauto(function () {
 }
 
 // Returns true if the given point is within line of sight, false otherwise
-::ppmod.visible <- function (eyes, dest, fov = 90.0) {
+::bppmod.visible <- function (eyes, dest, fov = 90.0) {
 
   // Validate input arguments
-  if (!ppmod.validate(eyes)) throw "visible: Invalid entity handle";
+  if (!bppmod.validate(eyes)) throw "visible: Invalid entity handle";
   if (typeof dest != "Vector") throw "visible: Invalid destination point";
   if (typeof fov != "float" && typeof fov != "integer") throw "visible: Invalid FOV argument";
 
@@ -2641,10 +2644,10 @@ ppmod.onauto(function () {
 }
 
 // Creates a button prop and fixes common issues associated with spawning buttons dynamically
-::ppmod.button <- function (type, pos, ang = Vector()) {
+::bppmod.button <- function (type, pos, ang = Vector()) {
 
   // Ensure that sounds are precached by creating a dummy entity
-  ppmod.create(type).then(function (dummy) {
+  bppmod.create(type).then(function (dummy) {
     dummy.Destroy();
   });
 
@@ -2668,7 +2671,7 @@ ppmod.onauto(function () {
   return ppromise(function (resolve, reject):(type, pos, ang, model) {
 
     // First, create a prop_dynamic with the appropriate model
-    ppmod.create(model).then(function (ent):(type, pos, ang, resolve) {
+    bppmod.create(model).then(function (ent):(type, pos, ang, resolve) {
 
       // Position the new prop
       ent.SetAbsOrigin(pos);
@@ -2677,7 +2680,7 @@ ppmod.onauto(function () {
       // The floor buttons often come with additional phys_bone_followers
       // Find and position these by iterating through entities backwards
       while (ent.GetClassname() == "phys_bone_follower") {
-        ent = ppmod.prev(ent.GetModelName(), ent);
+        ent = bppmod.prev(ent.GetModelName(), ent);
         ent.SetAbsOrigin(pos);
         ent.SetAngles(ang.x, ang.y, ang.z);
       }
@@ -2686,7 +2689,7 @@ ppmod.onauto(function () {
       if (type == "prop_button" || type == "prop_under_button") {
 
         // func_button breaks when created dynamically, use func_rot_button instead
-        ppmod.brush(pos + (ent.GetUpVector() * 40), Vector(8, 8, 8), "func_rot_button", ang, true).then(function (button):(type, ent, resolve) {
+        bppmod.brush(pos + (ent.GetUpVector() * 40), Vector(8, 8, 8), "func_rot_button", ang, true).then(function (button):(type, ent, resolve) {
 
           // Make the button box non-solid and activated with +use
           button.__KeyValueFromInt("CollisionGroup", 2);
@@ -2700,7 +2703,7 @@ ppmod.onauto(function () {
             permanent = false
           };
 
-          ppmod.addscript(button, "OnPressed", function ():(type, ent, button, properties) {
+          bppmod.addscript(button, "OnPressed", function ():(type, ent, button, properties) {
 
             // Underground buttons have different animation names
             // The additional sound effects for those are baked into the animation
@@ -2717,7 +2720,7 @@ ppmod.onauto(function () {
 
               // Create a logic_timer for repeated ticks
               timer = Entities.CreateByClassname("logic_timer");
-              ppmod.addscript(timer, "OnTimer", function ():(button) {
+              bppmod.addscript(timer, "OnTimer", function ():(button) {
                 button.EmitSound("Portal.room1_TickTock");
               });
 
@@ -2730,7 +2733,7 @@ ppmod.onauto(function () {
             // If "permanent", skip the release code
             if (properties.permanent) return;
 
-            ppmod.wait(function ():(ent, button, type, timer) {
+            bppmod.wait(function ():(ent, button, type, timer) {
 
               if (type == "prop_button") EntFireByHandle(ent, "SetAnimation", "up", 0.0, null, null);
               else EntFireByHandle(ent, "SetAnimation", "release", 0.0, null, null);
@@ -2751,7 +2754,7 @@ ppmod.onauto(function () {
             SetDelay = function (delay):(properties) { properties.delay = delay },
             SetTimer = function (enabled):(properties) { properties.timer = enabled },
             SetPermanent = function (enabled):(properties) { properties.permanent = enabled },
-            OnPressed = function (scr):(button) { ppmod.addscript(button, "OnPressed", scr) },
+            OnPressed = function (scr):(button) { bppmod.addscript(button, "OnPressed", scr) },
 
           });
 
@@ -2767,9 +2770,9 @@ ppmod.onauto(function () {
         local trigger;
         local size;
         if (type == "prop_under_floor_button") {
-          trigger = ppmod.trigger(pos + ent.GetUpVector() * 8.5, Vector(30, 30, 8.5), "trigger_multiple", ang);
+          trigger = bppmod.trigger(pos + ent.GetUpVector() * 8.5, Vector(30, 30, 8.5), "trigger_multiple", ang);
         } else {
-          trigger = ppmod.trigger(pos + ent.GetUpVector() * 7, Vector(20, 20, 7), "trigger_multiple", ang);
+          trigger = bppmod.trigger(pos + ent.GetUpVector() * 7, Vector(20, 20, 7), "trigger_multiple", ang);
         }
 
         // Activated by players and physics props
@@ -2827,17 +2830,17 @@ ppmod.onauto(function () {
         // Checks classnames and model names to filter the entities activating the button
         local strpress, strunpress;
         if (type == "prop_floor_button" || type == "prop_under_floor_button") {
-          strpress = "if (self.GetClassname() == \"prop_weighted_cube\" || self.GetClassname() == \"player\") ppmod.scrq_get(" + ppmod.scrq_add(press) + ")()";
-          strunpress = "if (self.GetClassname() == \"prop_weighted_cube\" || self.GetClassname() == \"player\") ppmod.scrq_get(" + ppmod.scrq_add(unpress) + ")()";
+          strpress = "if (self.GetClassname() == \"prop_weighted_cube\" || self.GetClassname() == \"player\") bppmod.scrq_get(" + bppmod.scrq_add(press) + ")()";
+          strunpress = "if (self.GetClassname() == \"prop_weighted_cube\" || self.GetClassname() == \"player\") bppmod.scrq_get(" + bppmod.scrq_add(unpress) + ")()";
         } else if (type == "prop_floor_ball_button") {
-          strpress = "if (self.GetClassname() == \"prop_weighted_cube\" && self.GetModelName() == \"models/props_gameplay/mp_ball.mdl\") ppmod.scrq_get(" + ppmod.scrq_add(press) + ")()";
-          strunpress = "if (self.GetClassname() == \"prop_weighted_cube\" && self.GetModelName() == \"models/props_gameplay/mp_ball.mdl\") ppmod.scrq_get(" + ppmod.scrq_add(unpress) + ")()";
+          strpress = "if (self.GetClassname() == \"prop_weighted_cube\" && self.GetModelName() == \"models/props_gameplay/mp_ball.mdl\") bppmod.scrq_get(" + bppmod.scrq_add(press) + ")()";
+          strunpress = "if (self.GetClassname() == \"prop_weighted_cube\" && self.GetModelName() == \"models/props_gameplay/mp_ball.mdl\") bppmod.scrq_get(" + bppmod.scrq_add(unpress) + ")()";
         } else {
-          strpress = "if (self.GetClassname() == \"prop_weighted_cube\" && self.GetModelName() != \"models/props_gameplay/mp_ball.mdl\") ppmod.scrq_get(" + ppmod.scrq_add(press) + ")()";
-          strunpress = "if (self.GetClassname() == \"prop_weighted_cube\" && self.GetModelName() != \"models/props_gameplay/mp_ball.mdl\") ppmod.scrq_get(" + ppmod.scrq_add(unpress) + ")()";
+          strpress = "if (self.GetClassname() == \"prop_weighted_cube\" && self.GetModelName() != \"models/props_gameplay/mp_ball.mdl\") bppmod.scrq_get(" + bppmod.scrq_add(press) + ")()";
+          strunpress = "if (self.GetClassname() == \"prop_weighted_cube\" && self.GetModelName() != \"models/props_gameplay/mp_ball.mdl\") bppmod.scrq_get(" + bppmod.scrq_add(unpress) + ")()";
         }
-        ppmod.addoutput(trigger, "OnStartTouch", "!activator", "RunScriptCode", strpress);
-        ppmod.addoutput(trigger, "OnEndTouch", "!activator", "RunScriptCode", strunpress);
+        bppmod.addoutput(trigger, "OnStartTouch", "!activator", "RunScriptCode", strpress);
+        bppmod.addoutput(trigger, "OnEndTouch", "!activator", "RunScriptCode", strunpress);
 
         // Resolve the promise with a table of interface methods
         resolve({
@@ -2845,8 +2848,8 @@ ppmod.onauto(function () {
           GetTrigger = function ():(trigger) { return trigger },
           GetProp = function ():(ent) { return ent },
           GetCount = function ():(properties) { return properties.count },
-          OnPressed = function (scr):(pressrl) { ppmod.addscript(pressrl, "OnTrigger", scr) },
-          OnUnpressed = function (scr):(unpressrl) { ppmod.addscript(unpressrl, "OnTrigger", scr) },
+          OnPressed = function (scr):(pressrl) { bppmod.addscript(pressrl, "OnTrigger", scr) },
+          OnUnpressed = function (scr):(unpressrl) { bppmod.addscript(unpressrl, "OnTrigger", scr) },
 
         });
 
@@ -2859,15 +2862,15 @@ ppmod.onauto(function () {
 }
 
 // Launches a physics prop in the given direction.
-::ppmod.catapult <- function (ent, vec) {
+::bppmod.catapult <- function (ent, vec) {
 
   // Validate arguments
   if (typeof vec != "Vector") throw "catapult: Invalid vector argument";
 
-  // Use ppmod.forent to find entity handles if necessary
-  if (!ppmod.validate(ent)) {
-    ppmod.forent(ent, function (curr):(vec) {
-      ppmod.catapult(curr, vec);
+  // Use bppmod.forent to find entity handles if necessary
+  if (!bppmod.validate(ent)) {
+    bppmod.forent(ent, function (curr):(vec) {
+      bppmod.catapult(curr, vec);
     });
     return;
   }
@@ -2896,15 +2899,15 @@ ppmod.onauto(function () {
 }
 
 // Apply a directional force to a prop, scaled to units per second
-::ppmod.push <- function (ent, vec) {
+::bppmod.push <- function (ent, vec) {
 
   // Validate arguments
   if (typeof vec != "Vector") throw "push: Invalid vector argument";
 
-  // Use ppmod.forent to find entity handles if necessary
-  if (!ppmod.validate(ent)) {
-    return ppmod.forent(ent, function (curr):(vec) {
-      ppmod.push(curr, vec);
+  // Use bppmod.forent to find entity handles if necessary
+  if (!bppmod.validate(ent)) {
+    return bppmod.forent(ent, function (curr):(vec) {
+      bppmod.push(curr, vec);
     });
   }
 
@@ -2941,7 +2944,7 @@ ppmod.onauto(function () {
 /******************/
 
 // Displays text on a player's screen using the game_text entity
-::ppmod.text <- class {
+::bppmod.text <- class {
 
   ent = null;
 
@@ -2997,15 +3000,27 @@ ppmod.onauto(function () {
 }
 
 // Creates a console command alias for calling a script function
-::ppmod.alias <- function (cmd, scr) {
+::bppmod.alias <- function (cmd, scr) {
 
   // Validate input argument
   if (typeof cmd != "string") throw "alias: Invalid command argument";
 
   // Add the input script to the script queue
   // This additionally validates the argument
-  local scrq_idx = ppmod.scrq_add(scr, -1);
+  local scrq_idx = bppmod.scrq_add(scr, -1); // This code is a shenanigans part
   // Set up a console alias to call the input script
-  SendToConsole("alias \""+ cmd +"\" \"script ppmod.scrq_get("+ scrq_idx +")()\"");
+  SendToConsole("alias \""+ cmd +"\" \"script bppmod.scrq_get("+ scrq_idx +")()\"");
 
+}
+
+::bp2mod.init <- function (cmd) {
+	SendToConsole("echo \"[WARN] bp2mod is loaded\""); // RAHHHHHHH I NEED TO TAKE A THERAPY
+	/* Sybau */
+	SendToConsole("script_execute bp2mod.nut");
+	SendToConsole("echo \"Is there is any .nugget file?\"");
+	if (typeof cmd != "string") throw "That ain't string"
+	else {
+		printl(cmd + " Has commit adultery, lol");
+		SendToConsole("script_reload");
+	} // RAGGGGGGGGGGG, IM SICK OF TS THING
 }
