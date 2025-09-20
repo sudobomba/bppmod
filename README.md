@@ -1,5 +1,6 @@
-# ppmod
+# "b"ppmod
 VScript library for rapid and comfortable prototyping of Portal 2 mods.
+And a fork of ppmod
 
 The focus of this project is to provide tools that assist in developing Portal 2 VScript mods faster and much more comfortably than through vanilla VScript. This involves adding syntactic sugar, new features, employing various workarounds for missing features or fixing broken ones through entities often specific to Portal 2. While ppmod strives to be performant, this does not come at the cost of reduced ease of use.
 
@@ -1046,3 +1047,5 @@ Here is an example that aliases the `+mouse_menu` bind (the F key by default) to
     data.pplayer.gravity(data.factor);
   });
 ```
+
+Noteside that this library is in Development, although it were buggy as it is
